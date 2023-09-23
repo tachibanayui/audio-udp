@@ -1,4 +1,18 @@
+pub mod utils;
+
 use std::{net::UdpSocket, mem, f32::consts::PI, thread, time::Duration};
+
+// use crossbeam_channel::{bounded, Receiver, unbounded};
+// use utils::{to_reference_time, SigoidWaveIter};
+// use windows::Win32::{
+//     Media::Audio::{
+//         eConsole, eRender, EDataFlow, IAudioClient3, IAudioRenderClient, IMMDeviceEnumerator,
+//         MMDeviceEnumerator, AUDCLNT_SHAREMODE_SHARED, WAVEFORMATEXTENSIBLE,
+//     },
+//     System::Com::{
+//         CoCreateInstance, CoInitialize, CoInitializeEx, CLSCTX_ALL, COINIT_MULTITHREADED,
+//     },
+// };
 
 pub struct SigoidWaveIter {
     sample_rate: u32,
@@ -55,3 +69,24 @@ fn main() {
     }
     
 }
+
+
+// fn start_send() {
+//     let TIME = Duration::from_millis(22);
+//     CoInitializeEx(None, COINIT_MULTITHREADED)?;
+//     let mmd_enum: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
+//     let out_dev = mmd_enum.GetDefaultAudioEndpoint(eRender, eConsole)?;
+//     let client: IAudioClient3 = out_dev.Activate(CLSCTX_ALL, None)?;
+//     let mix_format = client.GetMixFormat()?;
+//     let mix_format_ex = mix_format as *mut WAVEFORMATEXTENSIBLE;
+//     let channel_count = (*mix_format).nChannels;
+//     client.Initialize(
+//         AUDCLNT_SHAREMODE_SHARED,
+//         0,
+//         to_reference_time(TIME * 2),
+//         0,
+//         mix_format,
+//         None,
+//     )?;
+//     let bf_size = client.GetBufferSize()?;
+// }
