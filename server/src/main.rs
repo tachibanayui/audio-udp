@@ -23,6 +23,7 @@ use windows::Win32::{
     },
 };
 
+#[derive(Debug, Clone, Copy)]
 enum Mode {
     Sender,
     Receiver,
@@ -42,19 +43,28 @@ fn main2() {
         })
         .unwrap_or(Mode::Sender);
 
-    let ip = args.get(2).map(|x| x.as_str()).unwrap_or("0.0.0.0:16969");
+    let ip: String = args
+        .get(2)
+        .map(|x| x.clone())
+        .unwrap_or(if let Mode::Receiver = mode {
+            String::from("0.0.0.0:16969")
+        } else {
+            String::from("localhost:16969")
+        });
+
+    dbg!(mode, ip.clone());
 
     unsafe {
         match mode {
-            Mode::Receiver => recv().unwrap(),
-            Mode::Sender => send().unwrap(),
+            Mode::Receiver => recv(ip).unwrap(),
+            Mode::Sender => send(ip).unwrap(),
             _ => (),
         }
     }
 }
 
-unsafe fn recv() -> Result<(), Box<dyn Error>> {
-    let sk = UdpSocket::bind("0.0.0.0:16969")?;
+unsafe fn recv(ip: String) -> Result<(), Box<dyn Error>> {
+    let sk = UdpSocket::bind(ip)?;
     let mut buf = [0; 512];
     let (sender, receiver) = unbounded();
 
@@ -143,11 +153,11 @@ unsafe fn start_render(inc_queue: Receiver<f32>) -> windows::core::Result<()> {
     return Ok(());
 }
 
-unsafe fn send() -> Result<(), Box<dyn Error>> {
+unsafe fn send(ip: String) -> Result<(), Box<dyn Error>> {
     let (sender, recver) = unbounded();
 
     let sk = UdpSocket::bind("0.0.0.0:0").unwrap();
-    sk.connect("127.0.0.1:16969")?;
+    sk.connect(ip)?;
 
     let thd = std::thread::spawn(move || {
         start_capture(sender).unwrap();
@@ -202,12 +212,17 @@ unsafe fn start_capture(outg_queue: Sender<f32>) -> windows::core::Result<()> {
                 buf as *const u8 as *const f32,
                 (read_frames_count as usize * channel_count as usize),
             );
-    
+
             for x in buf_f32 {
                 outg_queue.send(*x).unwrap();
             }
-    
-            println!("capture: {} | {} | {}", read_frames_count, outg_queue.len(), flags);
+
+            println!(
+                "capture: {} | {} | {}",
+                read_frames_count,
+                outg_queue.len(),
+                flags
+            );
             capture_client.ReleaseBuffer(read_frames_count)?;
             next_frame_count = capture_client.GetNextPacketSize()?;
         }
@@ -215,7 +230,6 @@ unsafe fn start_capture(outg_queue: Sender<f32>) -> windows::core::Result<()> {
 
     return Ok(());
 }
-
 
 fn main() {
     main2();
