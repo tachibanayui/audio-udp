@@ -1,0 +1,28 @@
+[package]
+name = "server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+crossbeam-queue = "0.3"
+crossbeam-channel = "0.5.8"
+
+[dependencies.windows]
+versoin = "0.51.1"
+features = [
+    "implement",
+    "Media_Devices",
+    "Win32_Foundation",
+    "Win32_Media_Audio",
+    "Win32_System_Com_StructuredStorage",
+    "Foundation_Collections",
+
+    "Devices_Enumeration",
+    "Win32_Storage_EnhancedStorage",
+    "Win32_UI_Shell_PropertiesSystem",
+    "Win32_Foundation", "Win32_System_Com_StructuredStorage", "Win32_System_Variant"
+]
+
+
