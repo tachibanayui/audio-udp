@@ -1,0 +1,4 @@
+mode: Send
+implementaion: std-send
+host: 0.0.0.0:16969
+size: 512

@@ -1,4 +1,5 @@
-use std::{f32::consts::PI, time::Duration};
+use std::f32::consts::PI;
+
 
 pub struct SigoidWaveIter {
     sample_rate: u32,
@@ -28,9 +29,4 @@ impl Iterator for SigoidWaveIter {
             (self.sample_clock as f32 * self.c_freq * 2.0 * PI / self.sample_rate as f32).sin();
         Some(next)
     }
-}
-
-
-pub fn to_reference_time(d: Duration) -> i64{
-    (d.as_nanos() / 100) as i64
 }

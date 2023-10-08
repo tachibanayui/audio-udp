@@ -8,9 +8,15 @@ edition = "2021"
 [dependencies]
 crossbeam-queue = "0.3"
 crossbeam-channel = "0.5.8"
+common = { path = "../common" }
+
+[dependencies.async-std]
+version = "1.12.0"
+features = ["attributes"]
+
 
 [dependencies.windows]
-versoin = "0.51.1"
+version = "0.51.1"
 features = [
     "implement",
     "Media_Devices",

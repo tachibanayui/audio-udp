@@ -1,17 +1,13 @@
-pub mod utils;
-
 use std::{
     error::Error,
-    f32::consts::PI,
     mem::{self, size_of},
     net::UdpSocket,
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
+use common::{to_reference_time, ConsoleStatus, SigoidWaveIter, ThroughputMeter, ConsoleStatusHandle};
 use crossbeam_channel::{bounded, unbounded, Receiver, Sender};
-use crossbeam_queue::ArrayQueue;
-use utils::{to_reference_time, SigoidWaveIter};
 use windows::Win32::{
     Media::Audio::{
         eCapture, eConsole, eRender, EDataFlow, IAudioCaptureClient, IAudioClient3,
@@ -58,7 +54,6 @@ fn main2() {
         match mode {
             Mode::Receiver => recv(ip).unwrap(),
             Mode::Sender => send(ip).unwrap(),
-            _ => (),
         }
     }
 }
@@ -67,8 +62,29 @@ unsafe fn recv(ip: String) -> Result<(), Box<dyn Error>> {
     let sk = UdpSocket::bind(ip)?;
     let mut buf = [0; 512];
     let (sender, receiver) = unbounded();
+    let report = ConsoleStatus::new("Recv".into(), Duration::from_millis(50));
+    let (_, handle) = report.start();
+    let mut counter = 0;
+    let ins = Instant::now();
+    let thd_handle = handle.clone();
+    let thd = std::thread::spawn(move || start_render(receiver, &thd_handle));
+    
+    // let thruput = std::thread::spawn(move || {
+    //     let recv = receiver2;
 
-    let thd = std::thread::spawn(move || start_render(receiver));
+    //     loop {
+    //         let x = recv.recv().unwrap();
+    //         counter += 4;
+
+    //         if counter % 10000 == 0 {
+    //             let ela = ins.elapsed().as_millis();
+    //             if ela > 0  {
+    //                 let thru = counter * 1000 / ela;
+    //                 println!("thru: {}Kbps", thru / 1000);
+    //             }
+    //         }
+    //     }
+    // });
 
     loop {
         let read = sk.recv(&mut buf)?;
@@ -79,7 +95,13 @@ unsafe fn recv(ip: String) -> Result<(), Box<dyn Error>> {
 
         for x in buf_f32 {
             sender.send(*x)?;
-            // inc_queue.force_push(*x);
+
+            counter += 4;
+            let ela = ins.elapsed().as_millis();
+            if ela > 0 {
+                let thru = counter * 1000 / ela;
+                handle.report("thru".into(), format!("{}Kbps", thru / 1000)).unwrap();
+            }
         }
     }
 
@@ -91,7 +113,7 @@ const TIME: Duration = Duration::from_millis(2);
 
 const REFTIMES_PER_SEC: i64 = 10000000;
 const REFTIMES_PER_MILLISEC: i64 = 10000;
-unsafe fn start_render(inc_queue: Receiver<f32>) -> windows::core::Result<()> {
+unsafe fn start_render(inc_queue: Receiver<f32>, report: &ConsoleStatusHandle) -> windows::core::Result<()> {
     CoInitializeEx(None, COINIT_MULTITHREADED)?;
     let mmd_enum: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
     let out_dev = mmd_enum.GetDefaultAudioEndpoint(eRender, eConsole)?;
@@ -135,7 +157,7 @@ unsafe fn start_render(inc_queue: Receiver<f32>) -> windows::core::Result<()> {
         let requested_frame = writable_frames.min(inc_queue.len() as u32 / 2);
 
         let buf = render_client.GetBuffer(requested_frame)?;
-        println!("render: {} | {}", requested_frame, inc_queue.len());
+        report.report("render".into(), format!("{requested_frame} | {}", inc_queue.len())).unwrap();
         let buf_f32 = std::slice::from_raw_parts_mut(
             buf as *mut f32,
             requested_frame as usize * (channel_count as usize),
@@ -231,6 +253,7 @@ unsafe fn start_capture(outg_queue: Sender<f32>) -> windows::core::Result<()> {
     return Ok(());
 }
 
-fn main() {
-    main2();
+#[async_std::main]
+async fn main() {
+    main2()
 }
