@@ -14,3 +14,7 @@ Useful resources:
 - C++ Example: [Windows-classic-samples](https://github.com/microsoft/Windows-classic-samples/blob/main/Samples/ApplicationLoopback/cpp/LoopbackCapture.cpp)
 - Loopback Recording: https://learn.microsoft.com/en-us/windows/win32/coreaudio/loopback-recording
 - `window-rs` binding: https://microsoft.github.io/windows-docs-rs/doc/windows/Win32/Media/Audio/fn.ActivateAudioInterfaceAsync.html
+
+
+### opus_pg
+An example of using `opus` to compress audio data. This example will record from your default device, encode it using opus and send it through `crossbeam-channels` to be decoded and render using your default output device. 
